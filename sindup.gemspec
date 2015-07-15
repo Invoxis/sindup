@@ -3,21 +3,22 @@ lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'sindup/version'
 
-Gem::Specification.new do |spec|
-  spec.name          = "sindup"
-  spec.version       = Sindup::VERSION
-  spec.authors       = ["Jean-Guillaume BURET"]
-  spec.email         = ["jg.buret@gmail.com"]
-  spec.summary       = %q{Gem to wrap sindup.com API.}
-  spec.description   = %q{Gem to wrap sindup.com API}
-  spec.homepage      = "https://github.com/etrnljg/sindup"
-  spec.license       = "MIT"
+Gem::gemification.new do |gem|
+  gem.name          = "sindup"
+  gem.version       = Sindup::VERSION::STRING.dup
+  gem.authors       = ["Jean-Guillaume BURET"]
+  gem.email         = ["jg.buret@gmail.com"]
+  gem.summary       = %q{Gem to wrap sindup.com API.}
+  gem.description   = %q{Gem to wrap sindup.com API}
+  gem.homepage      = "https://github.com/etrnljg/sindup"
+  gem.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0")
-  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
-  spec.require_paths = ["lib"]
+  gem.files         = `git ls-files -z`.split("\x0")
+  gem.executables   = gem.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  gem.test_files    = gem.files.grep(%r{^(test|gem|features)/})
+  gem.require_paths = ["lib"]
 
-  spec.add_development_dependency "bundler", "~> 1.7"
-  spec.add_development_dependency "rake", "~> 10.0"
+  gem.add_development_dependency "bundler", "~> 1.7"
+  gem.add_development_dependency "rake", "~> 10.0"
+  gem.add_development_dependency "faraday", "~> 0.9.1"
 end
