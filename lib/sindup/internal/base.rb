@@ -39,7 +39,7 @@ module Sindup::Internal
         yield conn if block_given?
 
         coll.instance_variable_set('@connection', conn)
-        self.define_singleton_method(coll_name) { coll }
+        self.define_singleton_method(coll_name) { coll.dup }
       end
 
       self.send(coll_name)

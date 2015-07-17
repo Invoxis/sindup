@@ -7,7 +7,7 @@ This is a wrap of sindup.com API.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'sindup'
+gem 'sindup', github: 'etrnljg/sindup'
 ```
 
 And then execute:
