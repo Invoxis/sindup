@@ -7,16 +7,12 @@ module Sindup::Internal
       raise "Class #{self.class.name} is not supposed to be instantiated" if self.instance_of? Base
       @origin = options[:origin]
       @parent = options[:parent]
-      @routes_actions = define_routes_actions.map(&:to_sym)
+      @routes_actions = [:show, :edit, :delete]
     end
 
     def initialize_collections; end
 
     private
-
-    def define_routes_actions
-      return :show, :edit, :delete
-    end
 
     # Define programmatically a collection and make it readable
     # throw instance method

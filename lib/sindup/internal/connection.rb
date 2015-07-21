@@ -16,10 +16,6 @@ module Sindup::Internal
     #   @option ca_path [String]
     #  @option proxy [Hash|String]
     def initialize(options = {}, &block)
-      ap options # DEBUG
-
-      puts "#{__callee__} begin" # DEBUG
-      @client = options[:parent]
       @routes = {}
       @routes_keys = {}
 
@@ -46,7 +42,6 @@ module Sindup::Internal
       @api_url = api_url
 
       # authorization url
-      # TODO redirect_url optional?
       authorize_url, token_url, redirect_url = nil
       if options.has_key?(:authorize_url)
         authorize_url = options[:authorize_url][:authorize_url]
@@ -57,31 +52,18 @@ module Sindup::Internal
 
       # connection informations
       if options.has_key?(:auth) && options[:auth].has_key?(:basic) # String as "email:password"
-        puts "#{__callee__} begin if" # DEBUG
         account, password = options[:auth].delete(:basic).split(':')
         fill_form = options[:auth].delete(:fill_login_form_proc)
 
         raise ArgumentError, "Missing redirect url" if redirect_url.nil?
         raise ArgumentError, "Missing proc filling form" if fill_form.nil?
 
-        @token_request = {
-          delay: 20,
-          redirect_url: redirect_url +
-            (redirect_url.include?("?") ? "&" : "?") +
-            URI.encode_www_form(requester: @client.object_id, mode: "auto")
-        }
-        form_uri = @oa_client.auth_code.authorize_url(redirect_uri: @token_request[:redirect_url])
+        form_uri = @oa_client.auth_code.authorize_url(redirect_uri: redirect_url)
+        redirect_res = JSON.parse fill_form.call(form_uri, account, password)
+        raise redirect_res["error"] if redirect_res.has_key?("error") # TODO clean exception
 
-        puts "#{__callee__} begin loop" # DEBUG
-        fill_form.call(form_uri, account, password)
-        @token_request[:delay] -= sleep(1) while @token_request[:code].nil? && (not @token_request[:delay].zero?) 
-        raise "Request timed out" if @token_request[:code].nil? # TODO clean exception
-        puts "#{__callee__} end loop" # DEBUG
+        @token = @oa_client.auth_code.get_token(redirect_res["code"], redirect_uri: redirect_url)
 
-        @token = @oa_client.auth_code.get_token(@token_request[:code], redirect_uri: @token_request[:redirect_url])
-        @token_request = nil
-
-        puts "#{__callee__} end if" # DEBUG
       elsif options.has_key?(:auth) && options[:auth].has_key?(:token) # Sindup::Authorization::Token
         t = options[:auth].delete(:token)
         @token = ::OAuth2::AccessToken.new @oa_client, t.token, refresh_token: t.refresh_token, expires_at: t.expires_at.to_i
@@ -94,11 +76,11 @@ module Sindup::Internal
       end
 
       yield self if block_given?
-      puts "#{__callee__} end" # DEBUG
       self
     end
 
-    def initialize_dup
+    def initialize_dup(other)
+      super other
       @routes = {}
     end
 
@@ -128,19 +110,6 @@ module Sindup::Internal
       @oa_client.auth_code.authorize_url(options)
     end
 
-    # authorization callbacks
-
-    def waiting_authorization_callback?
-      !@token_request.nil? && @token_request[:code].nil?
-    end
-
-    def echo_authorization_callback(code)
-      puts "#{__callee__} begin"
-      raise unless waiting_authorization_callback?
-      @token_request[:code] = code
-      puts "#{__callee__} end"
-    end
-      
     private
 
     def define_route_method(action)

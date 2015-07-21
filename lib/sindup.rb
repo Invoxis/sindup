@@ -13,8 +13,8 @@ module Sindup
         button_accept = form_login.button_with(id: 'authorized')
         field_email.value = email
         field_password.value = password
-        form_login.submit button_accept
-        nil
+        page_result = form_login.submit button_accept
+        page_result.body
       end # !lambda
 
       default_options = {

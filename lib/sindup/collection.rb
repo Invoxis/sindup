@@ -41,8 +41,6 @@ module Sindup
 
       def create(options = {}, &block)
         item = @connection.create name: "hello world"
-        ap item
-        puts item.inspect
         # self.known item.attributes
       end
 

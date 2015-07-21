@@ -21,7 +21,7 @@ module Sindup::Authorization
     #  @option [Integer] :expires_at
     # @return [Sindup::Authorization::Token]
     def self.from_hash(options = {})
-      self.new(options[:token], options[:refresh_token], Time.at(options[:expires_at]))
+      self.new(options[:access_token], options[:refresh_token], Time.at(options[:expires_at]))
     end
 
   end
