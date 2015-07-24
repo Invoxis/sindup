@@ -15,13 +15,17 @@ module Sindup
     end
 
     def initialize_collections
-      collection_of CollectFilter, name: 'news' do |connection|
+      collection_of CollectFilter, name: 'filters' do |connection|
         connection.define_routes(
-          index:  "/folders/%{folder_id}/collectfilters%{cf_type}",
-          create: "/folders/%{folder_id}/collectfilters%{cf_type}",
-          delete: "/folders/%{folder_id}/collectfilters%{cf_type}/%{cf_id}"
+          index:  "/folders/%{folder_id}/collectfiltersnews",
+          create: "/folders/%{folder_id}/collectfiltersnews",
+          delete: "/folders/%{folder_id}/collectfiltersnews/%{collect_filter_id}"
         )
-        connection.define_routes_keys(folder_id: folder_id, cf_type: "news")
+        connection.define_routes_keys(folder_id: folder_id)
+      end
+      collection_of Result, name: 'news' do |conn|
+        conn.define_routes(index: "/folders/%{folder_id}/news")
+        conn.define_routes_keys(folder_id: folder_id)
       end
     end
 
@@ -36,10 +40,16 @@ module Sindup
     def inspect
       [
         "#<#{self.class.name}:#{self.object_id}",
-        "@folder_id=#{@folder_id.inspect}", "@name=#{@name.inspect}", "@description=#{@description.inspect}",
+        "@folder_id=#{@folder_id.inspect}",
+        "@name=#{@name.inspect}",
+        "@description=#{@description.inspect}",
         "@connection(#{@connection.nil? ? 'no' : 'yes'})>",
       ].join(", ")
     end
+
+    private
+
+    def primary_key() :folder_id end
 
   end # !Folder
 end # !Sindup

@@ -7,7 +7,7 @@ module Sindup::Internal
       raise "Class #{self.class.name} is not supposed to be instantiated" if self.instance_of? Base
       @origin = options[:origin]
       @parent = options[:parent]
-      @routes_actions = [:show, :edit, :delete]
+      @routes_actions = [:edit, :delete]
     end
 
     def initialize_collections() end
@@ -20,24 +20,28 @@ module Sindup::Internal
       raise if @connection.nil?
       @connection.define_routes.keys.each do |qkw|
         case qkw
-        when :show
+        # when :find
+        #   self.define_singleton_method("show") do |*p, &b|
+        #     self.class.from_hash @connection.find(*p, &b)
+        #   end
+
+        when :self
           self.define_singleton_method("show") do |*p, &b|
-            self.class.from_hash @connection.get(*p, &b)
+            self.class.from_hash @connection.self(*p, &b)
           end
 
         when :delete
           self.define_singleton_method("delete") do |*p, &b|
-            self.class.from_hash @connection.get(*p, &b)
+            self.class.from_hash @connection.delete(*p, &b)
           end
 
         when :edit
           self.define_singleton_method("save") do |*p, &b|
-            options = attributes.each_with_object({}) { |a, mem| mem[a] = send(a) }
-            ap attributes
-            ap send(attributes.first)
-            ap options
-            # options = self.attributes.map { |a| self.instance_variable_get("@#{a.to_s}") }
-            self.class.from_hash @connection.edit(options)
+            if self.send(primary_key).nil?
+              raise "Not linked to any collection, can't create object." if @origin.nil?
+              @origin.create(item: self)
+            else self.class.from_hash @connection.edit(attributes)
+            end.first
           end
 
         end # !case
@@ -63,7 +67,8 @@ module Sindup::Internal
     end
 
     def attributes
-      self.instance_variables.map(&:to_s).map { |v| v.gsub('@', '') }.map(&:to_sym) - [:origin, :connection, :parent, :routes_actions]
+      keys = self.instance_variables.map(&:to_s).map { |v| v.gsub('@', '') }.map(&:to_sym) - [:origin, :connection, :parent, :routes_actions]
+      keys.each_with_object({}) { |a, mem| mem[a] = send(a) }
     end
 
     private

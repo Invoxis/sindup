@@ -58,4 +58,5 @@ require 'sindup/client'
 # Models
 require 'sindup/folder'
 require 'sindup/collect_filter'
-# require './lib/sindup/result'
+require 'sindup/result'
+require 'sindup/user'

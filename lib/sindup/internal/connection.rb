@@ -1,7 +1,7 @@
 module Sindup::Internal
   class Connection
 
-    @@authorized_requests =  [:index, :show, :edit, :create, :delete]
+    @@authorized_requests =  [:index, :find, :self, :edit, :create, :delete]
 
     # @param options [Hash]
     #  @option url [Hash]
@@ -60,7 +60,7 @@ module Sindup::Internal
 
         form_uri = @oa_client.auth_code.authorize_url(redirect_uri: redirect_url)
         redirect_res = JSON.parse fill_form.call(form_uri, account, password)
-        raise redirect_res["error"] if redirect_res.has_key?("error") # TODO clean exception
+        raise redirect_res["error"] if redirect_res.has_key?("error")
 
         @token = @oa_client.auth_code.get_token(redirect_res["code"], redirect_uri: redirect_url)
 
@@ -114,8 +114,7 @@ module Sindup::Internal
 
     def refresh_token!
       @token = @token.refresh!
-      ap @token.to_hash
-      raise @token.params["error_description"] if @token.params.has_key?("error") # TODO clean exception
+      raise @token.params["error_description"] if @token.params.has_key?("error")
     end
 
     def define_route_method(action)
@@ -124,19 +123,18 @@ module Sindup::Internal
         refresh_token! if @token.expired?
         route = @api_url + (@routes[action] % @routes_keys.merge(params))
         result = @token.send(*request.call(route, params.select { |_,v| !v.nil? }, header))
-        raise result.error unless result.error.nil? # TODO proper exception class
+        raise result.error unless result.error.nil?
         JSON.parse result.body
       end # !proc
     end
 
-    # TODO remove header if not provided ?
     def query_keyword_to_request_type(qkw)
       case qkw
-      when :create then  ->(r, p, h) { return :post,   r,   body: p, headers: h }
-      when :edit   then  ->(r, p, h) { return :put,    r,   body: p, headers: h }
-      when :index  then  ->(r, p, h) { return :get,    r, params: p, headers: h }
-      when :show   then  ->(r, p, h) { return :get,    r, params: p, headers: h }
-      when :delete then  ->(r, p, h) { return :delete, r, params: p, headers: h }
+      when :create      then  ->(r, p, h) { return :post,   r,   body: p, headers: h }
+      when :edit        then  ->(r, p, h) { return :put,    r,   body: p, headers: h }
+      when :index       then  ->(r, p, h) { return :get,    r, params: p, headers: h }
+      when :find, :self then  ->(r, p, h) { return :get,    r, params: p, headers: h }
+      when :delete      then  ->(r, p, h) { return :delete, r, params: p, headers: h }
       else raise ArgumentError, "Unknown query"
       end
     end

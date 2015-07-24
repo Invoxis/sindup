@@ -16,12 +16,14 @@ module Sindup
         @origin = options[:origin]
         @markers = []
         @criterias = []
+        @end_criteria = nil
       end
 
       def initialize_clone(other)
         super(other)
         @markers = @markers.dup
         @criterias = @criterias.dup
+        @end_criteria = @end_criteria.dup unless @end_criteria.nil?
       end
 
       def initialize_queries
@@ -37,35 +39,77 @@ module Sindup
               new_coll
             end
 
+            self.define_singleton_method("until") do |last_id|
+              cur_end_crit = @end_criteria.dup
+              @end_criteria = last_id.to_i
+              new_coll = self.clone
+              @end_criteria = cur_end_crit
+              new_coll
+            end
+
             self.define_singleton_method("each") do |options = {}, &blk|
               raise if blk.nil?
               batch_size = options[:batch_size] || 100
+              counter_initialized_items = counter_different_initialized_items = counter_matching_initialized_items = 0
+              counter_markers, counter_queries = -1, 0
 
-              # querying while respecting criterias
+              # querying until limit
               begin
                 cursor ||= nil
-                @markers << Marker.new(cursor) unless cursor.nil?
-                result = @connection.index(cursor: cursor, size: batch_size)
+                @markers << Marker.new(cursor)
+                counter_markers += 1
+                # querying
+                result = @connection.index(cursor: cursor, count: batch_size)
                 items = @item_class.from_hash result
-                cursor = result["cursor"]
-                # should have stop criterias & select criterias
-                # while condition then should be checked before select criterias
-                items = items.take_while { |item| @criterias.all? { |crit| crit.call(item) } }
-              end while items.size == batch_size
+                cursor = (result["cursor"]["next"] rescue nil)
+                counter_queries += 1
 
-              # iterating on results
+                counter_initialized_items += items.size
+                counter_different_initialized_items += items.size
+                items = items.take_while { |item| item.id > @end_criteria } unless @end_criteria.nil?
+              end while items.size == batch_size
+              @markers.pop
+
+              # iterating on matching results
               loop do
+                # picking matching items
+                items = items.select { |item| @criterias.all? { |crit| crit.call(item) } }
+                counter_matching_initialized_items += items.size
+                # executing block
                 (self << items.reverse).each { |item| blk.call(item) }
+                # preparing next round
                 break if (m = @markers.pop).nil?
-                items = @item_class.from_hash @connection.index(cursor: m.cursor, size: batch_size)
+                items = @item_class.from_hash @connection.index(cursor: m.cursor, count: batch_size)
+                counter_initialized_items += items.size
+                counter_queries += 1
               end
 
+              {
+                cursor: (items.first.id rescue nil),
+                total_queries: counter_queries,
+                total_markers: counter_markers,
+                total_initialized_items: counter_initialized_items,
+                total_different_initialized_items: counter_different_initialized_items,
+                total_matching_initialized_items: counter_matching_initialized_items
+              }
             end
 
           when :create
-            self.define_singleton_method("create") do |item = nil, opts = {}, &blk|
-              item = @item_class.from_hash(@connection.create(options), self.default_objects_options) if item.nil?
+            self.define_singleton_method("create") do |opts = {}, &blk|
+              item = if opts[:item].nil?
+                @item_class.from_hash(@connection.create(opts), self.default_objects_options)
+              else
+                @item_class.from_hash(@connection.create(opts[:item].attributes), self.default_objects_options)
+              end
+              (self << item).first
+            end
+
+          when :find
+            self.define_singleton_method("find") do |options = {}, &blk|
+              item = @item_class.from_hash(@connection.find(options))
               self << item
+              blk.call(item) unless blk.nil?
+              item
             end
 
           end # !case
@@ -79,7 +123,7 @@ module Sindup
 
       def new(options = {}, &block)
         options = options.merge(self.default_objects_options)
-        @item_class.from_hash options, &block
+        (self << @item_class.from_hash(options, &block)).first
       end
 
       def known(options = {}, &block)
@@ -111,22 +155,18 @@ module Sindup
           item.initialize_routes_keys
           item.initialize_collections
           item.initialize_queries
-          item.define_singleton_method(:conn) { @connection } # DEBUG
-          conn.define_singleton_method(:tok) { @token } # DEBUG
         end
-        items.size <= 1 ? items.first : items
+        items
       end
 
       private
 
-      class Marker < ::OpenStruct
+      class Marker
 
         attr_reader   :cursor
 
-        def initialize(cursor, options = {}, &block)
+        def initialize(cursor)
           @cursor = cursor
-          super(options)
-          yield self if block_given?
         end
       end
 
