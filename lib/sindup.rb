@@ -41,6 +41,11 @@ end # !Sindup
 # Debug
 require 'ap'
 
+# Requirements
+require 'ostruct'
+require 'mechanize'
+require 'oauth2'
+
 # Internal
 require 'sindup/internal/base'
 require 'sindup/internal/connection'
@@ -54,7 +59,3 @@ require 'sindup/client'
 require 'sindup/folder'
 require 'sindup/collect_filter'
 # require './lib/sindup/result'
-
-# Requirements
-require 'mechanize'
-require 'oauth2'

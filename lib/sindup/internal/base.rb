@@ -10,7 +10,61 @@ module Sindup::Internal
       @routes_actions = [:show, :edit, :delete]
     end
 
-    def initialize_collections; end
+    def initialize_collections() end
+
+    def initialize_routes_keys(k = {})
+      @connection.define_routes_keys k
+    end
+
+    def initialize_queries
+      raise if @connection.nil?
+      @connection.define_routes.keys.each do |qkw|
+        case qkw
+        when :show
+          self.define_singleton_method("show") do |*p, &b|
+            self.class.from_hash @connection.get(*p, &b)
+          end
+
+        when :delete
+          self.define_singleton_method("delete") do |*p, &b|
+            self.class.from_hash @connection.get(*p, &b)
+          end
+
+        when :edit
+          self.define_singleton_method("save") do |*p, &b|
+            options = attributes.each_with_object({}) { |a, mem| mem[a] = send(a) }
+            ap attributes
+            ap send(attributes.first)
+            ap options
+            # options = self.attributes.map { |a| self.instance_variable_get("@#{a.to_s}") }
+            self.class.from_hash @connection.edit(options)
+          end
+
+        end # !case
+      end # !each
+    end
+
+    def self.from_hash(r, opts = {})
+      if r.is_a? Array
+        r.map { |o| self.new o.merge opts }
+      elsif r == true || r == false
+        return r
+      else
+        self.new r.merge opts
+      end
+    end
+
+    def method_missing(m, *p, &b)
+      # if (not @connection.nil?) && @connection.respond_to?(m)
+      #   self.define_singleton_method(m) { |*prms, &blk| self.class.from_hash @connection.send(m, *prms, &blk) }
+      #   self.send(m, *p, &b)
+      # else super m, *p, &b
+      # end
+    end
+
+    def attributes
+      self.instance_variables.map(&:to_s).map { |v| v.gsub('@', '') }.map(&:to_sym) - [:origin, :connection, :parent, :routes_actions]
+    end
 
     private
 
@@ -35,7 +89,8 @@ module Sindup::Internal
         yield conn if block_given?
 
         coll.instance_variable_set('@connection', conn)
-        self.define_singleton_method(coll_name) { coll.dup }
+        coll.initialize_queries
+        self.define_singleton_method(coll_name) { coll.clone }
       end
 
       self.send(coll_name)

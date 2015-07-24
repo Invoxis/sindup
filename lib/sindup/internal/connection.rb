@@ -37,7 +37,7 @@ module Sindup::Internal
       else raise ArgumentError, "Missing app url"
       end
 
-      @oa_client = ::OAuth2::Client.new app_id, app_secret, site: app_url
+      @oa_client = ::OAuth2::Client.new app_id, app_secret, site: app_url, raise_errors: false
       @client_id = client_id
       @api_url = api_url
 
@@ -112,19 +112,34 @@ module Sindup::Internal
 
     private
 
-    def define_route_method(action)
-      # method = self.send("#{action.to_s}?")
-      # self.define_singleton_method(action) do |params = {}, header = nil|
-      #   route = @routes[action] % @routes_keys
-      #   @faraday.send(method, @api_url + route, params, header)
-      # end
+    def refresh_token!
+      @token = @token.refresh!
+      ap @token.to_hash
+      raise @token.params["error_description"] if @token.params.has_key?("error") # TODO clean exception
     end
 
-    # def index?()  :get    end
-    # def create?() :post   end
-    # def show?()   :get    end
-    # def edit?()   :put    end
-    # def delete?() :delete end
+    def define_route_method(action)
+      request = query_keyword_to_request_type(action)
+      self.define_singleton_method(action) do |params = {}, header = nil|
+        refresh_token! if @token.expired?
+        route = @api_url + (@routes[action] % @routes_keys.merge(params))
+        result = @token.send(*request.call(route, params.select { |_,v| !v.nil? }, header))
+        raise result.error unless result.error.nil? # TODO proper exception class
+        JSON.parse result.body
+      end # !proc
+    end
+
+    # TODO remove header if not provided ?
+    def query_keyword_to_request_type(qkw)
+      case qkw
+      when :create then  ->(r, p, h) { return :post,   r,   body: p, headers: h }
+      when :edit   then  ->(r, p, h) { return :put,    r,   body: p, headers: h }
+      when :index  then  ->(r, p, h) { return :get,    r, params: p, headers: h }
+      when :show   then  ->(r, p, h) { return :get,    r, params: p, headers: h }
+      when :delete then  ->(r, p, h) { return :delete, r, params: p, headers: h }
+      else raise ArgumentError, "Unknown query"
+      end
+    end
 
   end # !Connection
 end # !Sindup::Internal

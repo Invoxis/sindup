@@ -36,7 +36,6 @@ module Sindup
       collection_of Folder do |connection|
         connection.define_routes(
           index:  "/folders",
-          show:   "/folders/%{folder_id}",
           edit:   "/folders/%{folder_id}",
           create: "/folders",
           delete: "/folders/%{folder_id}"
