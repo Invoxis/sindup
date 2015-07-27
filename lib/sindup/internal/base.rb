@@ -20,10 +20,6 @@ module Sindup::Internal
       raise if @connection.nil?
       @connection.define_routes.keys.each do |qkw|
         case qkw
-        # when :find
-        #   self.define_singleton_method("show") do |*p, &b|
-        #     self.class.from_hash @connection.find(*p, &b)
-        #   end
 
         when :self
           self.define_singleton_method("show") do |*p, &b|
@@ -56,14 +52,6 @@ module Sindup::Internal
       else
         self.new r.merge opts
       end
-    end
-
-    def method_missing(m, *p, &b)
-      # if (not @connection.nil?) && @connection.respond_to?(m)
-      #   self.define_singleton_method(m) { |*prms, &blk| self.class.from_hash @connection.send(m, *prms, &blk) }
-      #   self.send(m, *p, &b)
-      # else super m, *p, &b
-      # end
     end
 
     def attributes

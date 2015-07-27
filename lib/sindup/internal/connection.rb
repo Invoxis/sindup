@@ -3,18 +3,6 @@ module Sindup::Internal
 
     @@authorized_requests =  [:index, :find, :self, :edit, :create, :delete]
 
-    # @param options [Hash]
-    #  @option url [Hash]
-    #   @option app [String]
-    #   @option api [String]
-    #  @option user [String]
-    #  @option password [String]
-    #  @option token_auth [String]
-    #  @option adapter [Symbole]
-    #  @option request [Array[Symbole]]
-    #  @option ssl [Hash]
-    #   @option ca_path [String]
-    #  @option proxy [Hash|String]
     def initialize(options = {}, &block)
       @routes = {}
       @routes_keys = {}

@@ -45,8 +45,6 @@ module Sindup
       ].join(", ")
     end
 
-    private
-
     def primary_key() :user_id end
 
   end # !Result

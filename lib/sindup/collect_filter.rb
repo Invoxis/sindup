@@ -31,8 +31,6 @@ module Sindup
       ].join(", ")
     end
 
-    private
-
     def primary_key() :collect_filter_id end
 
   end # !CollectFilter

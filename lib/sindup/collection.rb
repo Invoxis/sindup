@@ -23,7 +23,6 @@ module Sindup
         super(other)
         @markers = @markers.dup
         @criterias = @criterias.dup
-        @end_criteria = @end_criteria.dup unless @end_criteria.nil?
       end
 
       def initialize_queries
@@ -40,8 +39,8 @@ module Sindup
             end
 
             self.define_singleton_method("until") do |last_id|
-              cur_end_crit = @end_criteria.dup
-              @end_criteria = last_id.to_i
+              cur_end_crit = @end_criteria
+              @end_criteria = crit
               new_coll = self.clone
               @end_criteria = cur_end_crit
               new_coll
@@ -66,7 +65,12 @@ module Sindup
 
                 counter_initialized_items += items.size
                 counter_different_initialized_items += items.size
-                items = items.take_while { |item| item.id > @end_criteria } unless @end_criteria.nil?
+                unless @end_criteria.nil?
+                  items = if @end_criteria.is_a? Integer
+                    items = items.take_while { |item| item.id > @end_criteria }
+                  else items.take_while { |item| @end_criteria.call(item) }
+                  end
+                end
               end while items.size == batch_size
               @markers.pop
 
@@ -76,7 +80,7 @@ module Sindup
                 items = items.select { |item| @criterias.all? { |crit| crit.call(item) } }
                 counter_matching_initialized_items += items.size
                 # executing block
-                (self << items.reverse).each { |item| blk.call(item) }
+                (self.adopt items.reverse).each { |item| blk.call(item) }
                 # preparing next round
                 break if (m = @markers.pop).nil?
                 items = @item_class.from_hash @connection.index(cursor: m.cursor, count: batch_size)
@@ -99,15 +103,16 @@ module Sindup
               item = if opts[:item].nil?
                 @item_class.from_hash(@connection.create(opts), self.default_objects_options)
               else
+                opts[:item].remove_instance_variable("@connection")
                 @item_class.from_hash(@connection.create(opts[:item].attributes), self.default_objects_options)
               end
-              (self << item).first
+              (self.adopt item).first
             end
 
           when :find
             self.define_singleton_method("find") do |options = {}, &blk|
               item = @item_class.from_hash(@connection.find(options))
-              self << item
+              self.adopt item
               blk.call(item) unless blk.nil?
               item
             end
@@ -123,12 +128,17 @@ module Sindup
 
       def new(options = {}, &block)
         options = options.merge(self.default_objects_options)
-        (self << @item_class.from_hash(options, &block)).first
+        item = @item_class.from_hash(options, &block)
+        (self.adopt item, i_c: !!item.send(item.primary_key)).first
       end
 
-      def known(options = {}, &block)
-        item = self.new options, &block
-        self << item
+      # def known(options = {}, &block)
+      #   item = self.new options, &block
+      #   self << item
+      # end
+
+      def inspect
+        "#<#{self.class.name}:#{self.object_id}>"
       end
 
       protected
@@ -141,7 +151,7 @@ module Sindup
       #
       # @param [Array[Sindup::Collection::Base]] items
       # @return [Array[Sindup::Collection::Base], Sindup::Collection::Base] items, or just item
-      def <<(*items)
+      def adopt(*items, i_rk: true, i_c: true, i_q: true)
         items.flatten!
         items.each do |item|
           raise ArgumentError, "Received #{item.class.name}, expecting #{@item_class.class.name}" unless item.is_a? @item_class
@@ -152,9 +162,9 @@ module Sindup
           routes = @connection.define_routes.select { |k, _| item.routes_actions.include? k }
           conn.define_routes(routes)
 
-          item.initialize_routes_keys
-          item.initialize_collections
-          item.initialize_queries
+          item.initialize_routes_keys if i_rk
+          item.initialize_collections if i_c
+          item.initialize_queries if i_q
         end
         items
       end

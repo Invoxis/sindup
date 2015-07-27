@@ -47,8 +47,6 @@ module Sindup
       ].join(", ")
     end
 
-    private
-
     def primary_key() :folder_id end
 
   end # !Folder

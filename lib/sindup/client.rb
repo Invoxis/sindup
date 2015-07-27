@@ -1,18 +1,6 @@
 module Sindup
   class Client < Internal::Base
 
-    # @param options [Hash]
-    #  @option url [Hash]
-    #   @option app [String]
-    #   @option api [String]
-    #  @option user [String]
-    #  @option password [String]
-    #  @option token_auth [String]
-    #  @option adapter [Symbole]
-    #  @option request [Array[Symbole]]
-    #  @option ssl [Hash]
-    #   @option ca_path [String]
-    #  @option proxy [Hash|String]
     def initialize(options = {}, &block)
       @connection = Internal::Connection.new options
       initialize_collections

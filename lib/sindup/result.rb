@@ -56,8 +56,6 @@ module Sindup
       ].join(", ")
     end
 
-    private
-
     def primary_key() :news_id end
 
   end # !Result

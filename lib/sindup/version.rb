@@ -3,7 +3,7 @@ module Sindup
 		MAJOR = 0
 		MINOR = 0
 		PATCH = 0
-		BUILD = 28
+		BUILD = 29
 
 		STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
 	end
