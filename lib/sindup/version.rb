@@ -1,9 +1,9 @@
 module Sindup
 	module VERSION
 		MAJOR = 0
-		MINOR = 0
+		MINOR = 1
 		PATCH = 0
-		BUILD = 29
+		BUILD = 0
 
 		STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
 	end
