@@ -138,6 +138,10 @@ fo = s.folders.new(name: "folderName")
 fo = fo.save
 ```
 
+Note that to create a user, you will need
+- the correct access rights
+- to provide your `client_id` when instantiating your client.
+
 ## Contributing
 
 1. Fork it ( https://github.com/etrnljg/sindup/fork )
