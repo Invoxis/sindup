@@ -38,11 +38,7 @@ module Sindup
 
 end # !Sindup
 
-# Debug
-require 'ap'
-
 # Requirements
-require 'ostruct'
 require 'mechanize'
 require 'oauth2'
 

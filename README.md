@@ -116,7 +116,8 @@ You can instantiate an object from its dedicated collection.
 ```ruby
 fo = s.folders.new(folder_id: 42, name: "folderName", description: "folderDescription")
 ```
-The object will then be able to process basic queries like pushing its modifications.
+
+Your object will only be able to deal with its collections if you instantiate it with an id.
 
 #### Updating
 
@@ -132,13 +133,13 @@ You can either use the `create` method on a collection...
 ```ruby
 fo = s.folders.create(name: "folderName")
 ```
-... or save an object that don't have any primary key setted :
+... or `save` an object that don't have any primary key setted :
 ```ruby
 fo = s.folders.new(name: "folderName")
 fo = fo.save
 ```
 
-Note that to create a user, you will need
+To create a user, you will need
 - the correct access rights
 - to provide your `client_id` when instantiating your client.
 
