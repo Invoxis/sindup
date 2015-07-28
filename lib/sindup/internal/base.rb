@@ -79,6 +79,7 @@ module Sindup::Internal
       unless self.respond_to?(coll_name)
         coll = Sindup::Collection::of(klass).new(:klass => klass, origin: self)
         conn = @connection.dup
+
         yield conn if block_given?
 
         coll.instance_variable_set('@connection', conn)

@@ -3,7 +3,7 @@ module Sindup
 
     def self.of(klass)
       klass_name = klass.name.split('::').last
-      (self.const_get klass_name rescue self.const_set klass_name, Class.new(Base))
+      (self.const_get(klass_name, false) rescue self.const_set klass_name, Class.new(Base))
     end
 
     class Base
