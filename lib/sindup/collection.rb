@@ -38,7 +38,7 @@ module Sindup
               new_coll
             end
 
-            self.define_singleton_method("until") do |last_id|
+            self.define_singleton_method("until") do |crit|
               cur_end_crit = @end_criteria
               @end_criteria = crit
               new_coll = self.clone
@@ -67,7 +67,7 @@ module Sindup
                 counter_different_initialized_items += items.size
                 unless @end_criteria.nil?
                   items = if @end_criteria.is_a? Integer
-                    items = items.take_while { |item| item.id > @end_criteria }
+                    items = items.take_while { |item| item.send(item.primary_key) != @end_criteria }
                   else items.take_while { |item| @end_criteria.call(item) }
                   end
                 end
@@ -100,12 +100,10 @@ module Sindup
 
           when :create
             self.define_singleton_method("create") do |opts = {}, &blk|
-              item = if opts[:item].nil?
-                @item_class.from_hash(@connection.create(opts), self.default_objects_options)
-              else
-                opts[:item].remove_instance_variable("@connection")
-                @item_class.from_hash(@connection.create(opts[:item].attributes), self.default_objects_options)
-              end
+              item = opts[:item] || self.new(opts)
+              yield item unless blk.nil?
+              item.remove_instance_variable("@connection")
+              item = @item_class.from_hash(@connection.create(item.attributes), self.default_objects_options)
               (self.adopt item).first
             end
 
@@ -131,11 +129,6 @@ module Sindup
         item = @item_class.from_hash(options, &block)
         (self.adopt item, i_c: !!item.send(item.primary_key)).first
       end
-
-      # def known(options = {}, &block)
-      #   item = self.new options, &block
-      #   self << item
-      # end
 
       def inspect
         "#<#{self.class.name}:#{self.object_id}>"

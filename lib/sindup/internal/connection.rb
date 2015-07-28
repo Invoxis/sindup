@@ -3,6 +3,8 @@ module Sindup::Internal
 
     @@authorized_requests =  [:index, :find, :self, :edit, :create, :delete]
 
+    attr_reader :client_id
+
     def initialize(options = {}, &block)
       @routes = {}
       @routes_keys = {}

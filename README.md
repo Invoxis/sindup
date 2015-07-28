@@ -74,7 +74,7 @@ s.folders
 #### Laziness
 
 All collections are "lazy". Their data is not loaded until you ask for.
-You can't retrieve all objects by once. You can only iterate over each of them using `each` method.
+You can't retrieve all objects by once. You can only iterate over each of them using `each`.
 ```ruby
 s.folders.each { |folder|  }
  => {:cursor=>nil, :total_queries=>1, :total_markers=>0, :total_initialized_items=>15, :total_different_initialized_items=>15, :total_matching_initialized_items=>15} 
@@ -108,7 +108,7 @@ Unlike criterias, you can't chain end-criterias. Only the last provided is used.
 
 ### Models
 
-Each object correctly instantiated inherits of the internal connection object that make them queryable.
+Each object correctly instantiated inherits the internal connection object that make them queryable.
 
 #### Instantiating
 
@@ -133,7 +133,7 @@ You can either use the `create` method on a collection...
 ```ruby
 fo = s.folders.create(name: "folderName")
 ```
-... or `save` an object that don't have any primary key setted :
+... or `save` an object that don't have any primary key set :
 ```ruby
 fo = s.folders.new(name: "folderName")
 fo = fo.save
