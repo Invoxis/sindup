@@ -77,7 +77,7 @@ module Sindup::Internal
       coll_name = options[:name] || class_to_string_container(klass)
 
       unless self.respond_to?(coll_name)
-        coll = Sindup::Collection::of(klass).new(:class => klass, origin: self)
+        coll = Sindup::Collection::of(klass).new(:klass => klass, origin: self)
         conn = @connection.dup
         yield conn if block_given?
 

@@ -12,7 +12,7 @@ module Sindup
 
       def initialize(options = {})
         raise "Class #{sels.class.name} is not supposed to be instantiated" if self.instance_of? Base
-        @item_class = options[:class] # the class of the item collected
+        @item_class = options[:klass] # the class of the item collected
         @origin = options[:origin]
         @markers = []
         @criterias = []
