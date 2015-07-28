@@ -43,6 +43,7 @@ require 'mechanize'
 require 'oauth2'
 
 # Internal
+require 'sindup/error'
 require 'sindup/internal/base'
 require 'sindup/internal/connection'
 require 'sindup/authorization/token'

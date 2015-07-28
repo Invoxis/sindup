@@ -108,11 +108,15 @@ module Sindup::Internal
     def define_route_method(action)
       request = query_keyword_to_request_type(action)
       self.define_singleton_method(action) do |params = {}, header = nil|
-        refresh_token! if @token.expired?
-        route = @api_url + (@routes[action] % @routes_keys.merge(params))
-        result = @token.send(*request.call(route, params.select { |_,v| !v.nil? }, header))
-        raise result.error unless result.error.nil?
-        JSON.parse result.body
+        begin
+          refresh_token! if @token.expired?
+          route = @api_url + (@routes[action] % @routes_keys.merge(params))
+          result = @token.send(*request.call(route, params.select { |_,v| !v.nil? }, header))
+          raise result.error unless result.error.nil?
+          JSON.parse result.body
+        rescue => e
+          raise Sindup::Error, e.message
+        end
       end # !proc
     end
 
