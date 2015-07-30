@@ -34,12 +34,18 @@ s = Sindup.new(app_id: "myAppId", app_secret: "myAppSecret", auth: { token: t })
 #### If you know your user ids
 
 ```ruby
+# Your code :
 options = {
 	app_id: "myAppId", app_secret: "myAppSecret",
 	auth: { basic: "myEmail:myPassword" },
-	authorize_url: { redirect_url: "myOAuth2CallbackUrl" }
+	authorize_url: { redirect_url: "http://example.com/sindup/callback" }
 }
 s = Sindup.new(options)
+
+# Your sindup controller :
+  def callback
+    render json: Sindup.received_authorization_callback(params)
+  end
 ```
 
 #### Note
