@@ -96,6 +96,10 @@ module Sindup::Internal
       ::Sindup::Authorization::Token.from_hash @token.to_hash
     end
 
+    def update_token?
+      !!(refresh_token! if @token.expired?)
+    end
+
     def authorize_url(options)
       @oa_client.auth_code.authorize_url(options)
     end

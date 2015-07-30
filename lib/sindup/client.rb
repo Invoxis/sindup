@@ -14,6 +14,10 @@ module Sindup
       @connection.current_token
     end
 
+    def update_token?
+      @connection.update_token?
+    end
+
     def self.received_authorization_callback(opts = {})
       opts.select { |k, v| %{mode code error}.include? k }.to_json
     end
