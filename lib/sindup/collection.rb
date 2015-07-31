@@ -89,7 +89,7 @@ module Sindup
               end
 
               {
-                cursor: (items.first.id rescue nil),
+                cursor: (items.first.send(:primary_key) rescue nil),
                 total_queries: counter_queries,
                 total_markers: counter_markers,
                 total_initialized_items: counter_initialized_items,
