@@ -88,8 +88,9 @@ module Sindup
                 counter_queries += 1
               end
 
+              item = items.first
               {
-                cursor: (items.first.send(:primary_key) rescue nil),
+                cursor: (item.send(item.primary_key) rescue nil),
                 total_queries: counter_queries,
                 total_markers: counter_markers,
                 total_initialized_items: counter_initialized_items,
