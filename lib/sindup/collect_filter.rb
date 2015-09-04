@@ -8,7 +8,8 @@ module Sindup
       super(options)
       @collect_filter_id = options["collect_filter_id"] || options[:collect_filter_id]
       @name = (options["filter"]["name"] rescue nil) || options[:name]
-      @query = (options["filter"]["criteria"].first["value"] rescue nil) || options[:query]
+      @query = (options["filter"]["criteria"].find{|e| e["type"] == "query"}["value"] rescue nil) || options[:query]
+      @language = (options["filter"]["criteria"].find{|e| e["type"] == "language"}["value"] rescue nil) || options[:language]
       yield self if block_given?
     end
 
